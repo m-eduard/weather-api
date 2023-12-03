@@ -1,32 +1,37 @@
 version: '3.3'
 
+x-db_credentials: &db-credentials
+  MONGO_INITDB_ROOT_USERNAME: weather_api_admin
+  MONGO_INITDB_ROOT_PASSWORD: weather_api_pass
+
 services:
-  weather_app:
+  weather-app:
     build:
       context: ./weather
       dockerfile: weather.yml
-    image: weather_app
-    # networks:
-    #   - api
+    image: weather-app
+    networks:
+      - api
     ports:
       - 6000:5000
     depends_on:
       - db
     restart: always
     environment:
+      <<: *db-credentials
+      MONGO_HOST: db
+      MONGO_PORT: 27017
       ANA: 12
 
   db:
     image: mongo:latest
-    # networks:
-    #   - api
+    networks:
+      - api
     ports:
       - 27017:27017
     volumes:
       - db_data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: weather_api_admin
-      MONGO_INITDB_ROOT_PASSWORD: weather_api_pass
+    environment: *db-credentials
   
 #   adminer:
 #     image: adminer
