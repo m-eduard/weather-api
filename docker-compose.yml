@@ -1,0 +1,54 @@
+version: '3.3'
+
+services:
+  weather_app:
+    build:
+      context: ./weather
+      dockerfile: weather.yml
+    image: weather_app
+    # networks:
+    #   - api
+    ports:
+      - 6000:5000
+    depends_on:
+      - db
+    restart: always
+    environment:
+      ANA: 12
+
+  db:
+    image: mongo:latest
+    # networks:
+    #   - api
+    ports:
+      - 27017:27017
+    volumes:
+      - db_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: weather_api_admin
+      MONGO_INITDB_ROOT_PASSWORD: weather_api_pass
+  
+#   adminer:
+#     image: adminer
+#     restart: always
+#     ports:
+#       - 8080:8080
+
+  # mongo-express:
+  #   image: mongo-express
+  #   restart: always
+  #   ports:
+  #     - 8081:8081
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: root
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: example
+  #     ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+volumes:
+  db_data: {}
+
+networks:
+  api:
+    name: weather_api_network
+  tools:
+    name: external_tools_network
