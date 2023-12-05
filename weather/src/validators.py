@@ -4,6 +4,8 @@ from typing import Any, Dict
 
 class Operations(Enum):
     POST_COUNTRY = "post_country"
+    POST_CITY = "post_city"
+    POST_TEMPERATURE = "post_temperature"
 
 
 def _validate_body(body: Any, types: Dict[str, type]) -> bool:
@@ -20,11 +22,32 @@ def _validate_body(body: Any, types: Dict[str, type]) -> bool:
 validators = {
     Operations.POST_COUNTRY: lambda body: _validate_body(
         body, expected_types[Operations.POST_COUNTRY]
-    )
+    ),
+    Operations.POST_CITY: lambda body: _validate_body(
+        body, expected_types[Operations.POST_CITY]
+    ),
+    Operations.POST_TEMPERATURE: lambda body: _validate_body(
+        body, expected_types[Operations.POST_TEMPERATURE]
+    ),
 }
 
-expected_types = {Operations.POST_COUNTRY: {"nume": str, "lat": float, "lon": float}}
-unique_fields = {Operations.POST_COUNTRY: ["nume"]}
+expected_types = {
+    Operations.POST_COUNTRY: {"nume": str, "lat": float, "lon": float},
+    Operations.POST_CITY: {"idTara": int, "nume": str, "lat": float, "lon": float},
+    Operations.POST_TEMPERATURE: {"idOras": int, "valoare": float},
+}
+
+unique_fields = {
+    Operations.POST_COUNTRY: ["nume"],
+    Operations.POST_CITY: ["idTara", "nume"],
+    Operations.POST_TEMPERATURE: ["idOras", "timestamp"],
+}
+
+dependencies = {
+    Operations.POST_CITY: [
+        {"collection": "countries", "srcField": "idTara", "destField": "_id"}
+    ]
+}
 
 
 validation_error = lambda op: (
