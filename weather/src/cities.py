@@ -42,7 +42,7 @@ with current_app.app_context():
                 str(
                     {
                         "operation": Operations.POST_CITY.value,
-                        "collection": "cities",
+                        "collection": collection.name,
                         "body": body,
                         "error": e,
                     }
