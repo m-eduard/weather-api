@@ -5,7 +5,9 @@ from flask import Blueprint, Response, current_app, jsonify, request
 from pymongo import MongoClient
 from validators import (
     Operations,
+    api_response_field_mappings,
     dependencies,
+    map_fields,
     unique_fields,
     validation_error,
     validators,
@@ -53,4 +55,30 @@ with current_app.app_context():
         response = jsonify({"id": new_city.inserted_id})
         response.status_code = 201
 
+        return response
+
+    @api_cities.route("/api/cities", methods=["GET"])
+    def get_city():
+        field_mappings = api_response_field_mappings[Operations.GET_CITIES]
+
+        response = jsonify(
+            [map_fields(x, field_mappings) for x in list(collection.find({}))]
+        )
+        response.status_code = 200
+        return response
+
+    @api_cities.route("/api/cities/country/<int:id>", methods=["GET"])
+    def get_cities_by_country(id):
+        if type(id) != int:
+            return Response("Id must be an integer", status=400)
+
+        field_mappings = api_response_field_mappings[Operations.GET_CITIES]
+
+        response = jsonify(
+            [
+                map_fields(x, field_mappings)
+                for x in list(collection.find({"idTara": id}))
+            ]
+        )
+        response.status_code = 200
         return response
