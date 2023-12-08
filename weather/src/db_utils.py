@@ -18,13 +18,10 @@ def get_next_index(counters: collection.Collection, counter_type: str) -> int:
 
 def check_uniqueness(
     collection: collection.Collection,
-    fields: list,
-    values: list,
+    unique_entries: dict,
     update: Tuple[bool, int] = (False, 0),
 ) -> bool:
-    query_res = collection.find_one(
-        {field: value for (field, value) in zip(fields, values)}
-    )
+    query_res = collection.find_one(unique_entries)
 
     # When we want to update the document with the specified _id,
     # then we should ignore its old data when checking for uniqueness
@@ -63,21 +60,20 @@ def insert_if_unique(
     if timestamp:
         document["timestamp"] = Timestamp(int(dt.datetime.utcnow().timestamp()), 1)
 
-    if check_uniqueness(
-        collection, unique_fields, [document[field] for field in unique_fields]
-    ):
+    if check_uniqueness(collection, {x: document[x] for x in unique_fields}):
         valid_insert, unsolved_dependency = solve_dependencies(
             collection.database, document, dependencies
         )
 
         if valid_insert:
-            document["_id"] = get_next_index(
-                collection.database.get_collection("counters"), collection.name
-            )
+            counters = collection.database.get_collection("counters")
+            document["_id"] = get_next_index(counters, collection.name)
             return collection.insert_one(document)
         else:
-            raise Exception(f"Dependency {unsolved_dependency} could not be solved")
-    return None
+            raise api_utils.ResourceDependencyError(
+                unsolved_dependency, document[unsolved_dependency["srcField"]]
+            )
+    raise api_utils.DuplicateResourceError(unique_fields, collection.name)
 
 
 def update(
@@ -93,8 +89,7 @@ def update(
 
     if check_uniqueness(
         collection,
-        unique_fields,
-        [document[field] for field in unique_fields],
+        {x: document[x] for x in unique_fields},
         update=(True, document["_id"]),
     ):
         valid_insert, unsolved_dependency = solve_dependencies(
@@ -107,6 +102,4 @@ def update(
             raise api_utils.ResourceDependencyError(
                 unsolved_dependency, document[unsolved_dependency["srcField"]]
             )
-    raise api_utils.DuplicateResourceError(
-        f"Another resource with the same {unique_fields} already exists in {collection.name}"
-    )
+    raise api_utils.DuplicateResourceError(unique_fields, collection.name)
