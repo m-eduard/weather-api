@@ -9,6 +9,7 @@ from pymongo import MongoClient
 from validators import (
     Operations,
     api_request_field_mappings,
+    delete_chain,
     dependencies,
     map_fields,
     unique_fields,
@@ -94,6 +95,22 @@ with current_app.app_context():
         ) as e:
             error_message = api_utils.build_error_message(
                 Operations.PUT_TEMPERATURE, collection.name, body, e
+            )
+            return api_utils.exception_handlers[type(e)](
+                json.loads(dumps(error_message))
+            )
+        return Response(status=200)
+
+    @api_temperatures.route("/api/temperatures/<id>", methods=["DELETE"])
+    def delete_temperature(id):
+        try:
+            id = api_utils.check_route_parameters(id=id)["id"]
+
+            db_utils.chain_delete(collection, {"_id": id}, delete_chain)
+
+        except (api_utils.BadTypeArgumentError, api_utils.ResourceNotFoundError) as e:
+            error_message = api_utils.build_error_message(
+                Operations.DELETE_TEMPERATURE, collection.name, None, e
             )
             return api_utils.exception_handlers[type(e)](
                 json.loads(dumps(error_message))
