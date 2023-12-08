@@ -111,8 +111,6 @@ query_params_handlers = {
             "lat": float,
             "lon": float,
         },
-        Operations.GET_TEMPERATURES_BY_CITY: {},
-        Operations.GET_TEMPERATURES_BY_COUNTRY: {},
     },
     "date_filter": {
         "from": build_datetime,

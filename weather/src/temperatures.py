@@ -52,6 +52,7 @@ with current_app.app_context():
             error_message = api_utils.build_error_message(
                 Operations.POST_TEMPERATURE, collection.name, body, e
             )
+            # Use dumps from BSON first to serialize the ISODate object
             return api_utils.exception_handlers[type(e)](
                 json.loads(dumps(error_message))
             )
@@ -74,18 +75,79 @@ with current_app.app_context():
                     # Don't throw an error if the parameter is not valid
                     pass
 
+        # Get all cities located at the given coordinated
+        cities = [
+            x["_id"]
+            for x in collection.database.get_collection("cities").find(filter_query)
+        ]
+
         values = [
             map_fields(
                 x,
                 api_response_field_mappings[Operations.GET_TEMPERATURES],
                 api_response_value_mappings[Operations.GET_TEMPERATURES],
             )
-            for x in collection.find(filter_query)
+            for x in collection.find({"idOras": {"$in": cities}})
             if api_utils.date_filter(
                 x["timestamp"], request.args.get("from"), request.args.get("until")
             )
         ]
+        return jsonify(values), 200
 
+    @api_temperatures.route("/api/temperatures/cities/<id>", methods=["GET"])
+    def get_temperatures_by_city(id):
+        try:
+            id = api_utils.check_route_parameters(id=id)["id"]
+        except api_utils.BadTypeArgumentError as e:
+            error_message = api_utils.build_error_message(
+                Operations.GET_TEMPERATURES_BY_CITY, collection.name, None, e
+            )
+            return api_utils.exception_handlers[type(e)](
+                json.loads(dumps(error_message))
+            )
+
+        values = [
+            map_fields(
+                x,
+                api_response_field_mappings[Operations.GET_TEMPERATURES],
+                api_response_value_mappings[Operations.GET_TEMPERATURES],
+            )
+            for x in collection.find({"idOras": id})
+            if api_utils.date_filter(
+                x["timestamp"], request.args.get("from"), request.args.get("until")
+            )
+        ]
+        return jsonify(values), 200
+
+    @api_temperatures.route("/api/temperatures/countries/<id>", methods=["GET"])
+    def get_temperatures_by_country(id):
+        try:
+            id = api_utils.check_route_parameters(id=id)["id"]
+        except api_utils.BadTypeArgumentError as e:
+            error_message = api_utils.build_error_message(
+                Operations.GET_TEMPERATURES_BY_COUNTRY, collection.name, None, e
+            )
+            return api_utils.exception_handlers[type(e)](
+                json.loads(dumps(error_message))
+            )
+
+        # Get all cities which are inside the given country
+        cities = [
+            x["_id"]
+            for x in collection.database.get_collection("cities").find({"idTara": id})
+        ]
+
+        values = [
+            map_fields(
+                x,
+                api_response_field_mappings[Operations.GET_TEMPERATURES],
+                api_response_value_mappings[Operations.GET_TEMPERATURES],
+            )
+            for x in collection.find({"idOras": {"$in": cities}})
+            if api_utils.date_filter(
+                x["timestamp"], request.args.get("from"), request.args.get("until")
+            )
+        ]
         return jsonify(values), 200
 
     @api_temperatures.route("/api/temperatures/<id>", methods=["PUT"])
