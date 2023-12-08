@@ -8,6 +8,7 @@ from validators import (
     Operations,
     api_request_field_mappings,
     api_response_field_mappings,
+    delete_chain,
     map_fields,
     unique_fields,
     validation_error,
@@ -54,10 +55,7 @@ with current_app.app_context():
         body = request.get_json(silent=False)
 
         try:
-            try:
-                id = int(id)
-            except:
-                raise api_utils.BadTypeArgumentError(f"id={id} must be an integer")
+            id = api_utils.check_route_parameters(id=id)["id"]
 
             if not validators[Operations.PUT_COUNTRY](body):
                 raise api_utils.ValidationError(
@@ -89,14 +87,10 @@ with current_app.app_context():
     @api_countries.route("/api/countries/<id>", methods=["DELETE"])
     def delete_country(id):
         try:
-            try:
-                id = int(id)
-            except:
-                raise api_utils.BadTypeArgumentError(f"id={id} must be an integer")
+            id = api_utils.check_route_parameters(id=id)["id"]
 
-            deleted_country = collection.delete_one({"_id": id})
-            if deleted_country.deleted_count == 0:
-                raise api_utils.ResourceNotFoundError(id, collection.name)
+            # Delete all subsequent cities and temperatures
+            db_utils.chain_delete(collection, {"_id": id}, delete_chain)
 
         except Exception as e:
             error_message = api_utils.get_error_message(
