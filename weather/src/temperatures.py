@@ -187,6 +187,7 @@ with current_app.app_context():
             api_utils.ValidationError,
             api_utils.ResourceNotFoundError,
             api_utils.DuplicateResourceError,
+            api_utils.ResourceDependencyError,
         ) as e:
             error_message = api_utils.build_error_message(
                 Operations.PUT_TEMPERATURE, collection.name, body, e
