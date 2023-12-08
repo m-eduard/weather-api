@@ -84,9 +84,7 @@ with current_app.app_context():
             id = api_utils.check_route_parameters(id=id)["id"]
 
             if not validators[Operations.PUT_CITY](body):
-                raise api_utils.ValidationError(
-                    validation_error(Operations.PUT_COUNTRY)
-                )
+                raise api_utils.ValidationError(validation_error(Operations.PUT_CITY))
             if body["id"] != id:
                 raise api_utils.ValidationError(
                     f"id={body['id']} does not match the id from the url id={id}"
