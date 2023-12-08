@@ -1,4 +1,4 @@
-from flask import Response
+from flask import jsonify
 from validators import Operations
 
 
@@ -11,7 +11,10 @@ class BadTypeArgumentError(Exception):
 
 
 class DuplicateResourceError(Exception):
-    pass
+    def __init__(self, unique_fields: list, collection_name: str):
+        super().__init__(
+            f"Another resource with the same {unique_fields} already exists in {collection_name}"
+        )
 
 
 class ResourceDependencyError(Exception):
@@ -27,22 +30,20 @@ class ResourceNotFoundError(Exception):
 
 
 exception_handlers = {
-    ValidationError: lambda err_message: Response(err_message, status=400),
-    BadTypeArgumentError: lambda err_message: Response(err_message, status=400),
-    DuplicateResourceError: lambda err_message: Response(err_message, status=409),
-    ResourceDependencyError: lambda err_message: Response(err_message, status=404),
-    ResourceNotFoundError: lambda err_message: Response(err_message, status=404),
+    ValidationError: lambda err_message: (jsonify(err_message), 400),
+    BadTypeArgumentError: lambda err_message: (jsonify(err_message), 400),
+    DuplicateResourceError: lambda err_message: (jsonify(err_message), 409),
+    ResourceDependencyError: lambda err_message: (jsonify(err_message), 404),
+    ResourceNotFoundError: lambda err_message: (jsonify(err_message), 404),
 }
 
 
 def get_error_message(
     operation: Operations, collection_name: str, body: dict, error: Exception
-) -> str:
-    return str(
-        {
-            "operation": operation.value,
-            "collection": collection_name,
-            "body": body,
-            "error": error,
-        }
-    )
+) -> dict:
+    return {
+        "operation": operation.value,
+        "collection": collection_name,
+        "body": body,
+        "error": str(error),
+    }
