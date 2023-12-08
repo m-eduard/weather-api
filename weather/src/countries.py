@@ -34,7 +34,10 @@ with current_app.app_context():
             new_country = db_utils.insert_if_unique(
                 collection, body, unique_fields[Operations.POST_COUNTRY]
             )
-        except api_utils.BadTypeArgumentError as e:
+        except (
+            api_utils.ValidationError,
+            api_utils.DuplicateResourceError,
+        ) as e:
             error_message = api_utils.build_error_message(
                 Operations.POST_COUNTRY, collection.name, body, e
             )
