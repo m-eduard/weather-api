@@ -4,11 +4,13 @@ from api_utils import Operations, build_date
 
 
 def _validate_body(body: Any, types: Dict[str, type]) -> bool:
+    if not body or type(body) != dict:
+        return False
+
     body_field_types = set(map(lambda entry: (entry[0], type(entry[1])), body.items()))
 
     return (
-        not (not body or type(body) != dict)
-        and len(set(types.items()) - body_field_types) == 0
+        len(set(types.items()) - body_field_types) == 0
         and len(body_field_types - set(types.items())) == 0
     )
 
