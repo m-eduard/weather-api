@@ -115,7 +115,6 @@ def chain_delete(collection: collection.Collection, filter: dict, delete_chain: 
     current_delete_chain = delete_chain[collection.name]
 
     to_be_deleted_documents = list(collection.find(filter))
-    print(to_be_deleted_documents)
 
     deleted_documents = collection.delete_many(filter)
     if "_id" in filter and deleted_documents.deleted_count == 0:

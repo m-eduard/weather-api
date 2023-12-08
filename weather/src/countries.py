@@ -34,7 +34,7 @@ with current_app.app_context():
             new_country = db_utils.insert_if_unique(
                 collection, body, unique_fields[Operations.POST_COUNTRY]
             )
-        except Exception as e:
+        except api_utils.BadTypeArgumentError as e:
             error_message = api_utils.build_error_message(
                 Operations.POST_COUNTRY, collection.name, body, e
             )
@@ -44,7 +44,6 @@ with current_app.app_context():
     @api_countries.route("/api/countries/", methods=["GET"])
     def get_country():
         field_mappings = api_response_field_mappings[Operations.GET_COUNTRIES]
-
         return (
             jsonify([map_fields(x, field_mappings) for x in list(collection.find({}))]),
             200,
@@ -77,7 +76,12 @@ with current_app.app_context():
                 if not collection.find_one({"_id": id}):
                     raise api_utils.ResourceNotFoundError(id, collection.name)
 
-        except Exception as e:
+        except (
+            api_utils.BadTypeArgumentError,
+            api_utils.ValidationError,
+            api_utils.ResourceNotFoundError,
+            api_utils.DuplicateResourceError,
+        ) as e:
             error_message = api_utils.build_error_message(
                 Operations.PUT_COUNTRY, collection.name, body, e
             )
@@ -92,7 +96,7 @@ with current_app.app_context():
             # Delete all subsequent cities and temperatures
             db_utils.chain_delete(collection, {"_id": id}, delete_chain)
 
-        except Exception as e:
+        except (api_utils.BadTypeArgumentError, api_utils.ResourceNotFoundError) as e:
             error_message = api_utils.build_error_message(
                 Operations.DELETE_COUNTRY, collection.name, None, e
             )
