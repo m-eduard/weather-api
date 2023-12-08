@@ -110,23 +110,21 @@ def update(
 # delete docs linked to the already deleted resources
 # based on the delete_chain
 def chain_delete(collection: collection.Collection, filter: dict, delete_chain: dict):
-    if collection.name not in delete_chain:
-        return
-    current_delete_chain = delete_chain[collection.name]
-
     to_be_deleted_documents = list(collection.find(filter))
 
     deleted_documents = collection.delete_many(filter)
     if "_id" in filter and deleted_documents.deleted_count == 0:
         raise api_utils.ResourceNotFoundError(filter["_id"], collection.name)
 
-    for document in to_be_deleted_documents:
-        chain_delete(
-            collection.database.get_collection(current_delete_chain["collection"]),
-            {
-                current_delete_chain["destField"]: document[
-                    current_delete_chain["srcField"]
-                ]
-            },
-            delete_chain,
-        )
+    if collection.name in delete_chain:
+        current_delete_chain = delete_chain[collection.name]
+        for document in to_be_deleted_documents:
+            chain_delete(
+                collection.database.get_collection(current_delete_chain["collection"]),
+                {
+                    current_delete_chain["destField"]: document[
+                        current_delete_chain["srcField"]
+                    ]
+                },
+                delete_chain,
+            )
