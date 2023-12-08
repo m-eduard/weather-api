@@ -118,10 +118,6 @@ with current_app.app_context():
 
             try:
                 raise e
-            except (api_utils.ValidationError, api_utils.BadTypeArgumentError):
-                return Response(error_message, status=400)
-            except (api_utils.ResourceNotFoundError, api_utils.ResourceDependencyError):
-                return Response(error_message, status=404)
-            except api_utils.DuplicateResourceError:
-                return Response(error_message, status=409)
+            except Exception as e:
+                return api_utils.exception_handlers[type(e)](error_message)
         return Response(status=200)
