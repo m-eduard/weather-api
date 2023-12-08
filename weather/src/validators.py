@@ -4,13 +4,22 @@ from typing import Any, Dict
 
 class Operations(Enum):
     POST_COUNTRY = "post_country"
-    POST_CITY = "post_city"
-    POST_TEMPERATURE = "post_temperature"
     GET_COUNTRIES = "get_countries"
     PUT_COUNTRY = "put_country"
+    DELETE_COUNTRY = "delete_country"
 
+    POST_CITY = "post_city"
     GET_CITIES = "get_cities"
+    GET_CITIES_BY_COUNTRY = "get_cities_by_country"
     PUT_CITY = "put_city"
+    DELETE_CITY = "delete_city"
+
+    POST_TEMPERATURE = "post_temperature"
+    GET_TEMPERATURES_BY_COORDS = "get_temperatures_by_coords"
+    GET_TEMPERATURE_BY_CITY = "get_temperature_by_city"
+    GET_TEMPERATURE_BY_COUNTRY = "get_temperature_by_country"
+    PUT_TEMPERATURE = "put_temperature"
+    DELETE_TEMPERATURE = "delete_temperature"
 
 
 def _validate_body(body: Any, types: Dict[str, type]) -> bool:
@@ -54,6 +63,10 @@ expected_types[Operations.PUT_CITY] = {
     **expected_types[Operations.POST_CITY],
     **{"id": int},
 }
+expected_types[Operations.PUT_TEMPERATURE] = {
+    **expected_types[Operations.POST_TEMPERATURE],
+    **{"id": int},
+}
 
 unique_fields = {
     Operations.POST_COUNTRY: ["nume"],
@@ -70,6 +83,12 @@ dependencies = {
     ],
 }
 
+# Specify first level of delete recursion for each collection
+delete_chain = {
+    "countries": {"collection": "cities", "srcField": "_id", "destField": "idTara"},
+    "cities": {"collection": "temperatures", "srcField": "_id", "destField": "idOras"},
+}
+
 validation_error = lambda op: (
     "Expected fields: "
     + f"{', '.join(str((x[0], x[1].__name__)) for x in expected_types[op].items())}"
@@ -84,6 +103,9 @@ api_response_field_mappings = {
     Operations.GET_CITIES: {
         "_id": "id",
     },
+    Operations.GET_TEMPERATURES: {
+        "_id": "id",
+    },
 }
 
 # Dict used to map the field names from the request body to the ones used in DB
@@ -92,6 +114,9 @@ api_request_field_mappings = {
         "id": "_id",
     },
     Operations.PUT_CITY: {
+        "id": "_id",
+    },
+    Operations.PUT_TEMPERATURE: {
         "id": "_id",
     },
 }
