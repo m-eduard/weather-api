@@ -17,6 +17,8 @@ app.config[
 with app.app_context():
     from cities import api_cities
     from countries import api_countries
+    from temperatures import api_temperatures
 
     app.register_blueprint(api_countries)
     app.register_blueprint(api_cities)
+    app.register_blueprint(api_temperatures)
