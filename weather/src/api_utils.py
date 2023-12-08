@@ -1,6 +1,5 @@
 import datetime as dt
 from enum import Enum
-from typing import Dict
 
 from flask import jsonify
 
