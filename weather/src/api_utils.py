@@ -40,7 +40,7 @@ exception_handlers = {
 }
 
 
-def get_error_message(
+def build_error_message(
     operation: Operations, collection_name: str, body: dict, error: Exception
 ) -> dict:
     return {

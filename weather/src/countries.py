@@ -35,7 +35,7 @@ with current_app.app_context():
                 collection, body, unique_fields[Operations.POST_COUNTRY]
             )
         except Exception as e:
-            error_message = api_utils.get_error_message(
+            error_message = api_utils.build_error_message(
                 Operations.POST_COUNTRY, collection.name, body, e
             )
             return api_utils.exception_handlers[type(e)](error_message)
@@ -78,7 +78,7 @@ with current_app.app_context():
                     raise api_utils.ResourceNotFoundError(id, collection.name)
 
         except Exception as e:
-            error_message = api_utils.get_error_message(
+            error_message = api_utils.build_error_message(
                 Operations.PUT_COUNTRY, collection.name, body, e
             )
             return api_utils.exception_handlers[type(e)](error_message)
@@ -93,7 +93,7 @@ with current_app.app_context():
             db_utils.chain_delete(collection, {"_id": id}, delete_chain)
 
         except Exception as e:
-            error_message = api_utils.get_error_message(
+            error_message = api_utils.build_error_message(
                 Operations.DELETE_COUNTRY, collection.name, None, e
             )
             return api_utils.exception_handlers[type(e)](error_message)
