@@ -8,6 +8,7 @@ from validators import (
     Operations,
     api_request_field_mappings,
     api_response_field_mappings,
+    delete_chain,
     dependencies,
     map_fields,
     unique_fields,
@@ -47,7 +48,7 @@ with current_app.app_context():
             return api_utils.exception_handlers[type(e)](error_message)
         return jsonify({"id": new_city.inserted_id}), 201
 
-    @api_cities.route("/api/cities", methods=["GET"])
+    @api_cities.route("/api/cities/", methods=["GET"])
     def get_city():
         field_mappings = api_response_field_mappings[Operations.GET_CITIES]
         return (
@@ -112,6 +113,21 @@ with current_app.app_context():
         ) as e:
             error_message = api_utils.build_error_message(
                 Operations.PUT_CITY, collection.name, body, e
+            )
+            return api_utils.exception_handlers[type(e)](error_message)
+        return Response(status=200)
+
+    @api_cities.route("/api/cities/<id>", methods=["DELETE"])
+    def delete_city(id):
+        try:
+            id = api_utils.check_route_parameters(id=id)["id"]
+
+            # Delete all subsequent temperatures
+            db_utils.chain_delete(collection, {"_id": id}, delete_chain)
+
+        except (api_utils.BadTypeArgumentError, api_utils.ResourceNotFoundError) as e:
+            error_message = api_utils.build_error_message(
+                Operations.DELETE_CITY, collection.name, None, e
             )
             return api_utils.exception_handlers[type(e)](error_message)
         return Response(status=200)

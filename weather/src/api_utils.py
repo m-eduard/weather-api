@@ -28,7 +28,7 @@ class ResourceDependencyError(Exception):
 
 class ResourceNotFoundError(Exception):
     def __init__(self, id: int, collection_name: str):
-        super().__init__(f"id={id} not found in {collection_name}")
+        super().__init__(f"_id={id} not found in {collection_name}")
 
 
 exception_handlers = {
