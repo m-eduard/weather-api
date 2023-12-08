@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 import os
 
@@ -9,6 +10,8 @@ from pymongo import MongoClient
 from validators import (
     Operations,
     api_request_field_mappings,
+    api_response_field_mappings,
+    api_response_value_mappings,
     delete_chain,
     dependencies,
     map_fields,
@@ -54,6 +57,36 @@ with current_app.app_context():
             )
 
         return jsonify({"id": new_temperature.inserted_id}), 201
+
+    @api_temperatures.route("/api/temperatures/", methods=["GET"])
+    def get_temperatures():
+        filter_query = {}
+
+        for param_name, convert_function in api_utils.query_params_handlers[
+            "db_filter"
+        ][Operations.GET_TEMPERATURES].items():
+            param_value = request.args.get(param_name)
+
+            if param_value:
+                try:
+                    filter_query[param_name] = convert_function(param_value)
+                except:
+                    # Don't throw an error if the parameter is not valid
+                    pass
+
+        values = [
+            map_fields(
+                x,
+                api_response_field_mappings[Operations.GET_TEMPERATURES],
+                api_response_value_mappings[Operations.GET_TEMPERATURES],
+            )
+            for x in collection.find(filter_query)
+            if api_utils.date_filter(
+                x["timestamp"], request.args.get("from"), request.args.get("until")
+            )
+        ]
+
+        return jsonify(values), 200
 
     @api_temperatures.route("/api/temperatures/<id>", methods=["PUT"])
     def put_temperature(id):
