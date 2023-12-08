@@ -1,7 +1,28 @@
+import datetime as dt
+from enum import Enum
 from typing import Dict
 
 from flask import jsonify
-from validators import Operations
+
+
+class Operations(Enum):
+    POST_COUNTRY = "post_country"
+    GET_COUNTRIES = "get_countries"
+    PUT_COUNTRY = "put_country"
+    DELETE_COUNTRY = "delete_country"
+
+    POST_CITY = "post_city"
+    GET_CITIES = "get_cities"
+    GET_CITIES_BY_COUNTRY = "get_cities_by_country"
+    PUT_CITY = "put_city"
+    DELETE_CITY = "delete_city"
+
+    POST_TEMPERATURE = "post_temperature"
+    GET_TEMPERATURES = "get_temperatures"
+    GET_TEMPERATURES_BY_CITY = "get_temperatures_by_city"
+    GET_TEMPERATURES_BY_COUNTRY = "get_temperatures_by_country"
+    PUT_TEMPERATURE = "put_temperature"
+    DELETE_TEMPERATURE = "delete_temperature"
 
 
 class ValidationError(Exception):
@@ -54,6 +75,8 @@ def build_error_message(
 route_parameters_types = {"id": int}
 
 
+# Returns a dictionary, where each value is the initial value,
+# but casted to the corresponding type
 def check_route_parameters(**kwargs) -> dict:
     casted_kwargs = {}
 
@@ -68,3 +91,45 @@ def check_route_parameters(**kwargs) -> dict:
                     f"{kwarg[0]}={kwarg[1]} must be an {route_parameters_types[kwarg[0]]}"
                 )
     return casted_kwargs
+
+
+date_format = "%Y-%m-%d"
+
+
+def build_datetime(date: str) -> dt.datetime:
+    return dt.datetime.strptime(date, date_format)
+
+
+def build_date(datetime: dt.datetime) -> str:
+    return datetime.strftime(date_format)
+
+
+# Return functions to convert the query parameters to the corresponding types
+query_params_handlers = {
+    "db_filter": {
+        Operations.GET_TEMPERATURES: {
+            "lat": float,
+            "lon": float,
+        },
+        Operations.GET_TEMPERATURES_BY_CITY: {},
+        Operations.GET_TEMPERATURES_BY_COUNTRY: {},
+    },
+    "date_filter": {
+        "from": build_datetime,
+        "until": build_datetime,
+    },
+}
+
+
+def date_filter(x: dt.datetime, start, end):
+    if start and end:
+        return (
+            query_params_handlers["date_filter"]["from"](start)
+            <= x
+            <= query_params_handlers["date_filter"]["until"](end)
+        )
+    if start:
+        return query_params_handlers["date_filter"]["from"](start) <= x
+    if end:
+        return x <= query_params_handlers["date_filter"]["until"](end)
+    return True

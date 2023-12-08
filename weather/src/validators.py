@@ -1,25 +1,6 @@
-from enum import Enum
 from typing import Any, Dict
 
-
-class Operations(Enum):
-    POST_COUNTRY = "post_country"
-    GET_COUNTRIES = "get_countries"
-    PUT_COUNTRY = "put_country"
-    DELETE_COUNTRY = "delete_country"
-
-    POST_CITY = "post_city"
-    GET_CITIES = "get_cities"
-    GET_CITIES_BY_COUNTRY = "get_cities_by_country"
-    PUT_CITY = "put_city"
-    DELETE_CITY = "delete_city"
-
-    POST_TEMPERATURE = "post_temperature"
-    GET_TEMPERATURES_BY_COORDS = "get_temperatures_by_coords"
-    GET_TEMPERATURE_BY_CITY = "get_temperature_by_city"
-    GET_TEMPERATURE_BY_COUNTRY = "get_temperature_by_country"
-    PUT_TEMPERATURE = "put_temperature"
-    DELETE_TEMPERATURE = "delete_temperature"
+from api_utils import Operations, build_date
 
 
 def _validate_body(body: Any, types: Dict[str, type]) -> bool:
@@ -47,6 +28,9 @@ validators = {
     ),
     Operations.PUT_CITY: lambda body: _validate_body(
         body, expected_types[Operations.PUT_CITY]
+    ),
+    Operations.PUT_TEMPERATURE: lambda body: _validate_body(
+        body, expected_types[Operations.PUT_TEMPERATURE]
     ),
 }
 
@@ -105,6 +89,16 @@ api_response_field_mappings = {
     },
     Operations.GET_TEMPERATURES: {
         "_id": "id",
+        "idOras": "",
+    },
+}
+
+# Dict storing functions which map the field values from the document stored
+# in DB to the ones that are expected by the client from our API (i.e. convert ISODate
+# to string YYYY-MM-DD)
+api_response_value_mappings = {
+    Operations.GET_TEMPERATURES: {
+        "timestamp": build_date,
     },
 }
 
@@ -122,7 +116,14 @@ api_request_field_mappings = {
 }
 
 
-def map_fields(document: dict, field_mappings: dict) -> dict:
-    return {
-        field_mappings[k] if k in field_mappings else k: v for k, v in document.items()
+def map_fields(document: dict, field_mappings: dict, value_mappings: dict = {}) -> dict:
+    mapped_document = {
+        (field_mappings.get(k, k)): (value_mappings[k](v) if k in value_mappings else v)
+        for k, v in document.items()
     }
+
+    # Erase the empty string key (bedcause all the unwanted
+    # keys were previously mapped to empty string)
+    mapped_document.pop("", None)
+
+    return mapped_document

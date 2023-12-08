@@ -93,11 +93,10 @@ def update(
         )
 
         if valid_insert:
-            update_request = {"$set": document}
+            update_query = {"$set": document}
             if timestamp:
-                update_request["$currentDate"] = {"timestamp": True}
-            print(update_request)
-            return collection.update_one(filter, update_request)
+                update_query["$currentDate"] = {"timestamp": True}
+            return collection.update_one(filter, update_query)
         else:
             raise api_utils.ResourceDependencyError(
                 unsolved_dependency, document[unsolved_dependency["srcField"]]
