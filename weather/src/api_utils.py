@@ -1,3 +1,5 @@
+from typing import Dict
+
 from flask import jsonify
 from validators import Operations
 
@@ -47,3 +49,22 @@ def get_error_message(
         "body": body,
         "error": str(error),
     }
+
+
+route_parameters_types = {"id": int}
+
+
+def check_route_parameters(**kwargs) -> dict:
+    casted_kwargs = {}
+
+    # Try to cast each argument that should have a specific type
+    # and if it fails, it means that the constraint is not satisfied
+    for kwarg in kwargs.items():
+        if kwarg[0] in route_parameters_types:
+            try:
+                casted_kwargs[kwarg[0]] = route_parameters_types[kwarg[0]](kwarg[1])
+            except:
+                raise BadTypeArgumentError(
+                    f"{kwarg[0]}={kwarg[1]} must be an {route_parameters_types[kwarg[0]]}"
+                )
+    return casted_kwargs
