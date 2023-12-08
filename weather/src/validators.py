@@ -9,15 +9,17 @@ class Operations(Enum):
     GET_COUNTRIES = "get_countries"
     PUT_COUNTRY = "put_country"
 
+    GET_CITIES = "get_cities"
+    PUT_CITY = "put_city"
+
 
 def _validate_body(body: Any, types: Dict[str, type]) -> bool:
+    body_field_types = set(map(lambda entry: (entry[0], type(entry[1])), body.items()))
+
     return (
         not (not body or type(body) != dict)
-        and len(
-            set(types.items())
-            - set(map(lambda entry: (entry[0], type(entry[1])), body.items()))
-        )
-        == 0
+        and len(set(types.items()) - body_field_types) == 0
+        and len(body_field_types - set(types.items())) == 0
     )
 
 
@@ -34,6 +36,9 @@ validators = {
     Operations.PUT_COUNTRY: lambda body: _validate_body(
         body, expected_types[Operations.PUT_COUNTRY]
     ),
+    Operations.PUT_CITY: lambda body: _validate_body(
+        body, expected_types[Operations.PUT_CITY]
+    ),
 }
 
 expected_types = {
@@ -43,6 +48,10 @@ expected_types = {
 }
 expected_types[Operations.PUT_COUNTRY] = {
     **expected_types[Operations.POST_COUNTRY],
+    **{"id": int},
+}
+expected_types[Operations.PUT_CITY] = {
+    **expected_types[Operations.POST_CITY],
     **{"id": int},
 }
 
@@ -71,14 +80,20 @@ validation_error = lambda op: (
 api_response_field_mappings = {
     Operations.GET_COUNTRIES: {
         "_id": "id",
-    }
+    },
+    Operations.GET_CITIES: {
+        "_id": "id",
+    },
 }
 
 # Dict used to map the field names from the request body to the ones used in DB
 api_request_field_mappings = {
     Operations.PUT_COUNTRY: {
         "id": "_id",
-    }
+    },
+    Operations.PUT_CITY: {
+        "id": "_id",
+    },
 }
 
 

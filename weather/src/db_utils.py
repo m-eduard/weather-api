@@ -1,6 +1,7 @@
 import datetime as dt
 from typing import Tuple, Union
 
+import api_utils
 from bson.timestamp import Timestamp
 from pymongo import ReturnDocument, collection, database, results
 
@@ -103,5 +104,9 @@ def update(
         if valid_insert:
             return collection.update_one(filter, {"$set": document})
         else:
-            raise Exception(f"Dependency {unsolved_dependency} could not be solved")
-    return None
+            raise api_utils.ResourceDependencyError(
+                unsolved_dependency, document[unsolved_dependency["srcField"]]
+            )
+    raise api_utils.DuplicateResourceError(
+        f"Another resource with the same {unique_fields} already exists in {collection.name}"
+    )

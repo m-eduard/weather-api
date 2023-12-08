@@ -1,10 +1,12 @@
 import os
 
+import api_utils
 import db_utils
 from flask import Blueprint, Response, current_app, jsonify, request
 from pymongo import MongoClient
 from validators import (
     Operations,
+    api_request_field_mappings,
     api_response_field_mappings,
     dependencies,
     map_fields,
@@ -82,3 +84,44 @@ with current_app.app_context():
         )
         response.status_code = 200
         return response
+
+    @api_cities.route("/api/cities/<int:id>", methods=["PUT"])
+    def put_city(id):
+        body = request.get_json(silent=False)
+
+        try:
+            if type(id) != int:
+                raise api_utils.BadTypeArgumentError(f"id={id} must be an integer")
+            if not validators[Operations.POST_CITY](body):
+                raise api_utils.ValidationError(validation_error(Operations.POST_CITY))
+            if body["id"] != id:
+                raise api_utils.ValidationError(
+                    f"id={body['id']}) does not match the id from the url id={id}"
+                )
+
+            body = map_fields(body, api_request_field_mappings[Operations.PUT_CITY])
+            updated_city = db_utils.update(
+                collection,
+                {"_id": id},
+                body,
+                unique_fields[Operations.POST_CITY],
+                dependencies[Operations.POST_CITY],
+            )
+
+            if updated_city.modified_count == 0:
+                raise api_utils.ResourceNotFoundError(id, collection.name)
+
+        except Exception as e:
+            error_message = api_utils.get_error_message(
+                Operations.PUT_CITY, collection.name, body, e
+            )
+
+            try:
+                raise e
+            except (api_utils.ValidationError, api_utils.BadTypeArgumentError):
+                return Response(error_message, status=400)
+            except (api_utils.ResourceNotFoundError, api_utils.ResourceDependencyError):
+                return Response(error_message, status=404)
+            except api_utils.DuplicateResourceError:
+                return Response(error_message, status=409)
+        return Response(status=200)
